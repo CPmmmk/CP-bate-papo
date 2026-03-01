@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat de Memes</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding-bottom: 60px;
+      background: #f2f2f2;
+    }
+
+    #messages {
+      list-style: none;
+      padding: 20px;
+    }
+
+    #messages li {
+      background: #6200ea;
+      color: white;
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      max-width: 70%;
+    }
+
+    strong {
+      color: #00e5ff;
+      display: block;
+      font-size: 12px;
+    }
+
+    form {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+      padding: 10px;
+      background: #333;
+    }
+
+    input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 20px;
+      border: none;
+      outline: none;
+    }
+
+    button {
+      margin-left: 10px;
+      padding: 10px 20px;
+      border-radius: 20px;
+      border: none;
+      background: #00c853;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<ul id="messages"></ul>
+
+<form id="form">
+  <input id="input" placeholder="Digite sua mensagem..." autocomplete="off">
+  <button>Enviar</button>
+</form>
+
+<!-- Firebase versão 8 (compatível com seu código) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<script>
+  var firebaseConfig = {
+    apiKey: "AIzaSyAedIimhGbBF0XqEDAoKdnEXWVwWF4M514",
+    authDomain: "meus-memes-ee358.firebaseapp.com",
+    projectId: "meus-memes-ee358",
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  var db = firebase.firestore();
+  var mensagensRef = db.collection("mensagens");
+
+  var form = document.getElementById("form");
+  var input = document.getElementById("input");
+  var nome = prompt("Qual seu nome?") || "Anônimo";
+
+  form.addEventListener("submit", function(e) {
+    e.preventDefault();
+    if (input.value) {
+      mensagensRef.add({
+        nome: nome,
+        texto: input.value,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      input.value = "";
+    }
+  });
+
+  mensagensRef.orderBy("timestamp")
+    .onSnapshot(function(snapshot) {
+      var lista = document.getElementById("messages");
+      lista.innerHTML = "";
+
+      snapshot.forEach(function(doc) {
+        var msg = doc.data();
+        var item = document.createElement("li");
+        item.innerHTML = "<strong>" + msg.nome + ":</strong>" + msg.texto;
+        lista.appendChild(item);
+      });
+    });
+</script>
+
+</body>
+</html>
