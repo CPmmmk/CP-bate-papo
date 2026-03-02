@@ -1,39 +1,65 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <!-- Favicon -->
-  <link rel="icon" href="BlipChat.svg" type="image/svg+xml">
-  
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BlipChat</title>
 
+  <!-- Favicon -->
+  <link rel="icon" href="BlipChat.svg" type="image/svg+xml">
+
   <style>
     body {
-      font-family: Arial, sans-serif;
       margin: 0;
-      padding-bottom: 60px;
-      background: #f2f2f2;
+      font-family: Arial, sans-serif;
+      background: #f4f0ff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      background: #7B2CBF;
+      color: white;
+      text-align: center;
+      padding: 15px;
+      font-size: 20px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    header img {
+      width: 25px;
+      margin-right: 10px;
     }
 
     #messages {
       list-style: none;
       padding: 20px;
+      margin: 0;
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 80px;
     }
 
     #messages li {
-      background: #6200ea;
+      background: #7B2CBF;
       color: white;
-      padding: 10px;
-      border-radius: 10px;
-      margin-bottom: 10px;
-      max-width: 70%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      margin-bottom: 12px;
+      max-width: 75%;
+      word-wrap: break-word;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 
     strong {
-      color: #00e5ff;
       display: block;
       font-size: 12px;
+      color: #00e5ff;
     }
 
     form {
@@ -41,81 +67,117 @@
       bottom: 0;
       width: 100%;
       display: flex;
+      justify-content: center;
+      background: white;
       padding: 10px;
-      background: #333;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+
+    .form-container {
+      display: flex;
+      width: 100%;
+      max-width: 600px;
     }
 
     input {
       flex: 1;
-      padding: 10px;
+      padding: 12px;
       border-radius: 20px;
-      border: none;
+      border: 1px solid #ccc;
       outline: none;
     }
 
     button {
       margin-left: 10px;
-      padding: 10px 20px;
+      padding: 12px 20px;
       border-radius: 20px;
       border: none;
       background: #00c853;
       color: white;
       cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    #username {
+      width: 100%;
+      max-width: 600px;
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
     }
   </style>
 </head>
 <body>
 
+<header>
+  <img src="blip-icon.svg" alt="Ícone de conversa">💬 BlipChat
+</header>
+
+<input id="username" placeholder="Escolha seu nome...">
+
 <ul id="messages"></ul>
 
 <form id="form">
-  <input id="input" placeholder="Digite sua mensagem..." autocomplete="off">
-  <button>Enviar</button>
+  <div class="form-container">
+    <input id="input" placeholder="Digite sua mensagem..." autocomplete="off">
+    <button>Enviar</button>
+  </div>
 </form>
 
-<!-- Firebase versão 8 (compatível com seu código) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
 <script>
-  var firebaseConfig = {
-    apiKey: "AIzaSyAedIimhGbBF0XqEDAoKdnEXWVwWF4M514",
-    authDomain: "meus-memes-ee358.firebaseapp.com",
-    projectId: "meus-memes-ee358",
-  };
+var firebaseConfig = {
+  apiKey: "AIzaSyAedIimhGbBF0XqEDAoKdnEXWVwWF4M514",
+  authDomain: "meus-memes-ee358.firebaseapp.com",
+  projectId: "meus-memes-ee358",
+};
 
-  firebase.initializeApp(firebaseConfig);
-  var db = firebase.firestore();
-  var mensagensRef = db.collection("mensagens");
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+var mensagensRef = db.collection("mensagens");
 
-  var form = document.getElementById("form");
-  var input = document.getElementById("input");
-  var nome = prompt("Qual seu nome?") || "Anônimo";
+var form = document.getElementById("form");
+var input = document.getElementById("input");
+var usernameInput = document.getElementById("username");
 
-  form.addEventListener("submit", function(e) {
-    e.preventDefault();
-    if (input.value) {
-      mensagensRef.add({
-        nome: nome,
-        texto: input.value,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      input.value = "";
-    }
+form.addEventListener("submit", function(e) {
+  e.preventDefault();
+  
+  var nome = usernameInput.value.trim() || "Anônimo";
+
+  if (input.value.trim() !== "") {
+    mensagensRef.add({
+      nome: nome,
+      texto: input.value,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    input.value = "";
+  }
+});
+
+mensagensRef.orderBy("timestamp").limit(100)
+.onSnapshot(function(snapshot) {
+  var lista = document.getElementById("messages");
+  lista.innerHTML = "";
+
+  snapshot.forEach(function(doc) {
+    var msg = doc.data();
+    if (!msg.texto) return;
+
+    var item = document.createElement("li");
+    item.innerHTML = "<strong>" + msg.nome + "</strong>" + msg.texto;
+    lista.appendChild(item);
   });
 
-  mensagensRef.orderBy("timestamp")
-    .onSnapshot(function(snapshot) {
-      var lista = document.getElementById("messages");
-      lista.innerHTML = "";
-
-      snapshot.forEach(function(doc) {
-        var msg = doc.data();
-        var item = document.createElement("li");
-        item.innerHTML = "<strong>" + msg.nome + ":</strong>" + msg.texto;
-        lista.appendChild(item);
-      });
-    });
+  window.scrollTo(0, document.body.scrollHeight);
+});
 </script>
 
 </body>
