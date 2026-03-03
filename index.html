@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BlipChat</title>
 
-  <!-- Favicon -->
   <link rel="icon" href="BlipChat.svg" type="image/svg+xml">
 
   <style>
@@ -29,11 +28,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-
-    header img {
-      width: 25px;
-      margin-right: 10px;
     }
 
     #messages {
@@ -98,10 +92,6 @@
       font-weight: bold;
     }
 
-    button:hover {
-      opacity: 0.9;
-    }
-
     #username {
       width: 100%;
       max-width: 600px;
@@ -115,7 +105,7 @@
 <body>
 
 <header>
-  <img src="blip-icon.svg" alt="Ícone de conversa">💬 BlipChat
+  💬 BlipChat
 </header>
 
 <input id="username" placeholder="Escolha seu nome...">
@@ -147,22 +137,49 @@ var form = document.getElementById("form");
 var input = document.getElementById("input");
 var usernameInput = document.getElementById("username");
 
+function limparMensagensAntigas() {
+  var agora = new Date();
+  var limite24h = new Date(agora.getTime() - (24 * 60 * 60 * 1000));
+
+  mensagensRef
+    .where("timestamp", "<=", limite24h)
+    .get()
+    .then(function(snapshot) {
+      snapshot.forEach(function(doc) {
+        mensagensRef.doc(doc.id).delete();
+      });
+    });
+}
+
 form.addEventListener("submit", function(e) {
   e.preventDefault();
   
   var nome = usernameInput.value.trim() || "Anônimo";
 
   if (input.value.trim() !== "") {
-    mensagensRef.add({
-      nome: nome,
-      texto: input.value,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+
+    limparMensagensAntigas();
+
+    mensagensRef.orderBy("timestamp").get().then(function(snapshot) {
+
+      if (snapshot.size >= 50) {
+        var maisAntiga = snapshot.docs[0];
+        mensagensRef.doc(maisAntiga.id).delete();
+      }
+
+      mensagensRef.add({
+        nome: nome,
+        texto: input.value,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
     });
+
     input.value = "";
   }
 });
 
-mensagensRef.orderBy("timestamp").limit(100)
+mensagensRef.orderBy("timestamp").limit(50)
 .onSnapshot(function(snapshot) {
   var lista = document.getElementById("messages");
   lista.innerHTML = "";
@@ -182,3 +199,4 @@ mensagensRef.orderBy("timestamp").limit(100)
 
 </body>
 </html>
+
