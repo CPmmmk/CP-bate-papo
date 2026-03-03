@@ -129,6 +129,9 @@
   </div>
 </form>
 
+<!-- Som de notificação -->
+<audio id="notifSound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
@@ -147,6 +150,7 @@ var form = document.getElementById("form");
 var input = document.getElementById("input");
 var usernameInput = document.getElementById("username");
 var clearButton = document.getElementById("clearChat");
+var notifSound = document.getElementById("notifSound");
 
 // Enviar mensagem
 form.addEventListener("submit", function(e) {
@@ -166,9 +170,7 @@ form.addEventListener("submit", function(e) {
 
 // Apagar todas mensagens
 clearButton.addEventListener("click", function() {
-
   var confirmar = confirm("Tem certeza que deseja apagar TODAS as mensagens?");
-
   if (confirmar) {
     mensagensRef.get().then(function(snapshot) {
       snapshot.forEach(function(doc) {
@@ -176,10 +178,10 @@ clearButton.addEventListener("click", function() {
       });
     });
   }
-
 });
 
-// Atualizar chat em tempo real
+// Atualizar chat e tocar som de notificação
+var primeiraVez = true;
 mensagensRef.orderBy("timestamp")
 .onSnapshot(function(snapshot) {
   var lista = document.getElementById("messages");
@@ -194,9 +196,18 @@ mensagensRef.orderBy("timestamp")
     lista.appendChild(item);
   });
 
+  // Scroll automático
   window.scrollTo(0, document.body.scrollHeight);
+
+  // Toca som de notificação, mas não na primeira vez que carrega o chat
+  if (!primeiraVez) {
+    notifSound.play();
+  } else {
+    primeiraVez = false;
+  }
 });
 </script>
 
 </body>
 </html>
+
