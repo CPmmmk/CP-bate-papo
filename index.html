@@ -25,9 +25,17 @@
       padding: 15px;
       font-size: 20px;
       font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    }
+
+    #clearChat {
+      margin-top: 10px;
+      padding: 10px 20px;
+      border-radius: 20px;
+      border: none;
+      background: #ff1744;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
     }
 
     #messages {
@@ -108,6 +116,8 @@
   💬 BlipChat
 </header>
 
+<button id="clearChat">🗑️ Apagar todas mensagens</button>
+
 <input id="username" placeholder="Escolha seu nome...">
 
 <ul id="messages"></ul>
@@ -136,50 +146,41 @@ var mensagensRef = db.collection("mensagens");
 var form = document.getElementById("form");
 var input = document.getElementById("input");
 var usernameInput = document.getElementById("username");
+var clearButton = document.getElementById("clearChat");
 
-function limparMensagensAntigas() {
-  var agora = new Date();
-  var limite24h = new Date(agora.getTime() - (24 * 60 * 60 * 1000));
-
-  mensagensRef
-    .where("timestamp", "<=", limite24h)
-    .get()
-    .then(function(snapshot) {
-      snapshot.forEach(function(doc) {
-        mensagensRef.doc(doc.id).delete();
-      });
-    });
-}
-
+// Enviar mensagem
 form.addEventListener("submit", function(e) {
   e.preventDefault();
   
   var nome = usernameInput.value.trim() || "Anônimo";
 
   if (input.value.trim() !== "") {
-
-    limparMensagensAntigas();
-
-    mensagensRef.orderBy("timestamp").get().then(function(snapshot) {
-
-      if (snapshot.size >= 50) {
-        var maisAntiga = snapshot.docs[0];
-        mensagensRef.doc(maisAntiga.id).delete();
-      }
-
-      mensagensRef.add({
-        nome: nome,
-        texto: input.value,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
+    mensagensRef.add({
+      nome: nome,
+      texto: input.value,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
-
     input.value = "";
   }
 });
 
-mensagensRef.orderBy("timestamp").limit(50)
+// Apagar todas mensagens
+clearButton.addEventListener("click", function() {
+
+  var confirmar = confirm("Tem certeza que deseja apagar TODAS as mensagens?");
+
+  if (confirmar) {
+    mensagensRef.get().then(function(snapshot) {
+      snapshot.forEach(function(doc) {
+        mensagensRef.doc(doc.id).delete();
+      });
+    });
+  }
+
+});
+
+// Atualizar chat em tempo real
+mensagensRef.orderBy("timestamp")
 .onSnapshot(function(snapshot) {
   var lista = document.getElementById("messages");
   lista.innerHTML = "";
@@ -199,5 +200,3 @@ mensagensRef.orderBy("timestamp").limit(50)
 
 </body>
 </html>
-
-
